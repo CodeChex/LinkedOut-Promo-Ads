@@ -9,10 +9,10 @@ Adds a button for automatic hiding of promotional ads on LinkedIn's homepage.
 ## Installation
 ### Latest release
 * Firefox
-  * go to homepage of the extension on [Firefox Addons](https://github.com/CodeChex/LinkedOut-Promo-Ads) and click **Add to Firefox**
+  * go to homepage of the extension on [Firefox Addons](https://addons.mozilla.org/en-US/firefox/addon/linkedout-auto-hide-promos) and click **Add to Firefox**
 * Chrome
   * go to homepage of the extension on 
-[Chrome Web Store](https://chrome.google.com/webstore/detail/LinkedOut-Promo-Ads/TBD) 
+[Chrome Web Store](https://chrome.google.com/webstore/detail/ggpfkaknfckpihiphiilfhkpoocijgei) 
 and click **Add to Chrome**
 
 ### Development
