@@ -21,35 +21,6 @@ and click **Add to Chrome**
 * Chrome
   * Type `chrome://extensions/` in the address bar and hit `Enter` -> Load unpacked -> Select source directory
 
-## Building the plugin from source
-
-### Pre-requisites
-
-The following dependencies with their versions are required to build the plugin.
-Prior versions of these dependencies will likely work as well:
-* node v8.10.0
-* npm v3.5.2
-
-To install `node` and all the `npm` modules, 
-run the following in terminal (required only the first time):
-
-#### Linux
-```
-apt-get install node
-npm install
-```
-#### OS X
-```
-brew install node
-npm install
-```
-To build the plugin, run:
-```
-gulp
-```
-This will create a **dist** directory which contains all the plugin content
-with minified code, along with a .zip archive required for web stores.
-
 ## Based on the "linkedin-hide-article-button" from:
 * [Anja Stanojevic](https://www.linkedin.com/in/anja-stanojevic-459a5631/)
 * [Tomo Radenovic](https://www.linkedin.com/in/tomo-radenovic-a59a4971/)
