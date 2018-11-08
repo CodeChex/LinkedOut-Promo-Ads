@@ -1,4 +1,4 @@
-# ![Linkedin hide promotional ads logo](icons/icon48x48.png) LinkedIn hide promotional ads
+# ![Linkedin hide promotional ads logo](src/icons/icon48x48.png) LinkedIn hide promotional ads
 
 Adds a button for automatic hiding of promotional ads on LinkedIn's homepage. 
 
@@ -9,10 +9,10 @@ Adds a button for automatic hiding of promotional ads on LinkedIn's homepage.
 ## Installation
 ### Latest release
 * Firefox
-  * go to homepage of the extension on [Firefox Addons](https://github.com/checco/linkedin-hide-promos) and click **Add to Firefox**
+  * go to homepage of the extension on [Firefox Addons](https://github.com/CodeChex/LinkedOut-Promo-Ads) and click **Add to Firefox**
 * Chrome
   * go to homepage of the extension on 
-[Chrome Web Store](https://chrome.google.com/webstore/detail/linkedin-hide-promos/TBD) 
+[Chrome Web Store](https://chrome.google.com/webstore/detail/LinkedOut-Promo-Ads/TBD) 
 and click **Add to Chrome**
 
 ### Development
@@ -50,7 +50,7 @@ gulp
 This will create a **dist** directory which contains all the plugin content
 with minified code, along with a .zip archive required for web stores.
 
-## Contributors from linkedin-hide-article-button
+## Based on the "linkedin-hide-article-button" from:
 * [Anja Stanojevic](https://www.linkedin.com/in/anja-stanojevic-459a5631/)
 * [Tomo Radenovic](https://www.linkedin.com/in/tomo-radenovic-a59a4971/)
 * [Danilo Radenovic](https://www.daniloradenovic.com)
