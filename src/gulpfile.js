@@ -13,7 +13,7 @@ gulp.task('copy-files', ['clean'], function () {
 });
 
 gulp.task('compress', ['clean'], function () {
-    return gulp.src('script.js')
+    return gulp.src(['script.js', 'background.js'])
         .pipe(uglify())
         .pipe(gulp.dest('dist'))
 });
