@@ -1,20 +1,47 @@
-.hide-article-button {
-    position: absolute;
-    top: 10px;
-    right: 45px;
-    padding: 3px 6px;
-    z-index: 100;
-    cursor: pointer;
-    color: white;
-    background-color: #0473b2;
-    border: none #0473b2;
-    border-radius: 2px;
-    font-family: inherit;
-    font-size: 13px;
-    font-weight: 600;
+.linkedout-tattoo {
+	position: absolute;
+	top: -5px;
+	left: -5px;
+	padding: 10px 6px;
+	z-index: 100;
+	cursor: pointer;
+	background: #c00; /* fallback */
+	background:
+        -moz-linear-gradient(45deg,  transparent 30%, #c00 30%),
+        -moz-linear-gradient(135deg, transparent 30%, #c00 30%),
+        -moz-linear-gradient(225deg, transparent 30%, #c00 30%),
+        -moz-linear-gradient(315deg, transparent 30%, #c00 30%);
+	background:
+        -o-linear-gradient(45deg,  transparent 30%, #c00 30%),
+        -o-linear-gradient(135deg, transparent 30%, #c00 30%),
+        -o-linear-gradient(225deg, transparent 30%, #c00 30%),
+        -o-linear-gradient(315deg, transparent 30%, #c00 30%);
+	background:
+        -webkit-linear-gradient(45deg,  transparent 30%, #c00 30%),
+        -webkit-linear-gradient(135deg, transparent 30%, #c00 30%),
+        -webkit-linear-gradient(225deg, transparent 30%, #c00 30%),
+        -webkit-linear-gradient(315deg, transparent 30%, #c00 30%);
+
+	background-position: bottom left, bottom right, top right, top left;
+	-moz-background-size: 50% 50%;
+	-webkit-background-size: 50% 50%;
+	background-size: 50% 50%;
+	background-repeat: no-repeat;
+	display: block;
+	text-align: center;
+	vertical-align: middle;
+	font-family: Verdana, Tahoma, Arial;
+	font-weight: bold;
+	font-size: 75%;
+	line-height: 75%;
+	color: white;
+	height: 30px;
+	width: 30px;
 }
 
-.hide-article-button:hover {
-    background-color: #006097;
-    border-color: #006097;
+.linkedout-class {
+    /* 
+	display: block; 
+	*/
 }
+

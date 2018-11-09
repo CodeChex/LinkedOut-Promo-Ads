@@ -1,0 +1,26 @@
+html, body {
+  text-align: center;
+  font-family: Verdana, Tahoma, Arial;
+  font-size: 1.0em;
+}
+
+.byline {
+	font-size: 0.75em;
+	white-space: nowrap;
+}
+
+.button {
+  margin: 3% auto;
+  padding: 4px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.menu:hover {
+  background-color: #CFF2F2;
+}
+
+.menu {
+  background-color: #E5F2F2;
+}
+

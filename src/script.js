@@ -1,18 +1,179 @@
 /* 
-Branched from "linkedin-hide-article-button"
-by: Danilo Radenovic, Anja Stanojevic, Tomo Radenovic
+Copyleft (c) 2018, Checco Computer Services
+Version 0.5.0
+- total rewrite 
+- added toggling of ads/tattoos
+- added support for Twitter/LinkedIn 
+- added compatibility between Chrome/Firefox
+- added icon popup menu
+
+ - Inspired by "linkedin-hide-article-button" : Danilo Radenovic, Anja Stanojevic, Tomo Radenovic
 */
 
-var totalAds = 0;
-var currentAds = 0;
+// globals
+var linkedout_TrackingURL = document.location.origin;
+var linkedout_TotalAds = -1;
+var linkedout_TrackingSite = undefined;
+var linkedout_FeedContainer = undefined;
+var linkedout_HomeButton = undefined;
+// options
+var linkedout_opt = {
+	Tattoo : true,
+	AutoHide : false,
+	Debug : 69
+};
 
-//console.debug("[EXT]: BEGIN");
+function debugMsg(minLevel,msg) {
+	if (linkedout_opt.Debug >= minLevel) console.debug("(" + minLevel + ")-" + msg);
+}
+
+function onError(error) {
+	console.debug(`Error: ${error}`);
+}
+
+function saveOptions() {
+	// chrome.storage.sync.set(linkedout_opt);
+}
+
+function restoreOptions() {
+
+	function loadOptions(result) {
+		if ( result ) linkedout_opt = result;
+	}
+	// chrome.storage.sync.get(null).then(loadOptions, onError);
+}
+
+function resetGlobals() {
+	linkedout_TrackingURL = document.location.origin;
+	linkedout_TotalAds = 0;
+	linkedout_TrackingSite = undefined;
+	linkedout_FeedContainer = undefined;
+	linkedout_HomeButton = undefined;
+	disableIcon();
+	//restoreOptions();
+}
+
+function countAll(element,objectType) {
+	var p = $(element).find(objectType).toArray();
+	var count = ( p === undefined ) ? 0 : p.length; 
+	debugMsg(99,"[EXT::countAll("+objectType+")]: " + count);
+	return count;
+}
+
+function getPromotionList() {
+	var result = Array();
+	debugMsg(79,"[EXT::getPromotionList]: BEGIN");
+	var mainFeed = document.getElementsByClassName(linkedout_FeedContainer)[0];
+	if ( linkedout_TrackingSite === "LinkedIn" ) {
+		var items = $(mainFeed).find("div[data-id]").toArray();
+		if ( items !== undefined ) {
+			debugMsg(69,"[EXT::getPromotionList]: parsing ["+items.length+"] LinkedIn items");
+			items.forEach(function(item) {
+				// check for drop down selections pointing to ad_choices
+				if ( countAll(item,"li.option-ad_choice") > 0 || countAll(item,"button.option-button__ad_choice") > 0 ) {
+					result.push(item);
+					debugMsg(89,"[EXT::getPromotionList]: found LinkedIn AD");
+				}
+				// check headlines for other types of ads
+				else {
+					var headlines = $(item).find("span.feed-shared-post-meta__headline").toArray();
+					if ( headlines !== undefined ) {
+						debugMsg(89,"[EXT::getPromotionList]: parsing ["+headlines.length+"] LinkedIn headlines");
+						headlines.forEach(function(headline) {
+							debugMsg(99,"[EXT::getPromotionList]: headline ["+headline.innerText+"] ");
+							if ( headline.innerText === "Promoted" ) {
+								result.push(item);
+								debugMsg(89,"[EXT::getPromotionList]: found LinkedIn PROMOTED headline");
+								return;
+							}
+						});
+					}
+				}
+			});
+			debugMsg(69,"[EXT::getPromotionList]: found ["+result.length+"] LinkedIn Ads");
+		}
+	}
+	else if ( linkedout_TrackingSite === "Twitter" ) {
+		result = $(mainFeed).find("div.promoted-tweet").toArray();
+		debugMsg(69,"[EXT::getPromotionList]: found ["+result.length+"] Twitter Ads");
+	}
+	debugMsg(99,"[EXT::getPromotionList]: END");
+	return result === undefined ? Array() : result;
+}
+
+function hasTattoo(element) {
+	debugMsg(99,"[EXT::hasTattoo]: BEGIN");
+	var branded = (countAll(element,"button.linkedout-tattoo") > 0);
+	/*
+	var children = element.childNodes;
+	for (var i = 0; i < children.length; i++) {
+		if (children[i].classList !== undefined &&
+			children[i].classList.contains("linkedout-tattoo")) {
+			branded = true;
+			break;
+		}
+	}
+	*/
+	debugMsg(89,"[EXT::hasTattoo]: RESULT = " + branded);
+	return branded;
+}
+
+function isMarked(element) {
+	debugMsg(99,"[EXT::isMarked]: BEGIN");
+	var branded = element.classList.contains("linkedout-class");
+	debugMsg(89,"[EXT::isMarked]: RESULT = " + branded);
+	return branded;
+}
+
+function markElement(element) {
+	debugMsg(79,"[EXT::markElement]: BEGIN");
+	if ( !isMarked(element) ) {
+		debugMsg(89,"[EXT::markElement]: Marking");
+		// mark the element
+		element.classList.add("linkedout-class");
+		element.style.display = ( linkedout_opt.AutoHide ? "none" : "block");
+		// apply tattoo
+		debugMsg(89,"[EXT::markElement]: Tattoo");
+		var btn = document.createElement("button");
+		btn.classList.add("linkedout-tattoo");
+		btn.classList.add("button-reset");
+		btn.innerText = "AD";
+		btn.addEventListener("click", function () {
+			element.style.display = "none";
+		});
+		btn.style.display = ( linkedout_opt.Tattoo ? "block" : "none");
+		element.appendChild(btn);
+	}
+	debugMsg(99,"[EXT::markElement]: END");
+}
+
+function processFeed() {
+	debugMsg(79,"[EXT::processFeed]: BEGIN");
+	var tPromotionList = getPromotionList();
+	var nCountAds = 0;
+	debugMsg(69,"[EXT::processFeed]: checking [" + tPromotionList.length + "] ads ");
+	tPromotionList.forEach(function (element) {
+		if (!isMarked(element)) {
+			nCountAds ++;
+			linkedout_TotalAds ++;
+			markElement(element);
+		}
+	});
+	debugMsg(89,"[EXT::processFeed]: nCountAds=" + nCountAds + ", TotalAds=" +linkedout_TotalAds);
+	if ( nCountAds > 0 ) {
+		chrome.runtime.sendMessage({
+			"action" : "updateCount",
+			"value" : linkedout_TotalAds
+		});
+	}
+	debugMsg(99,"[EXT::processFeed]: END");
+}
 
 function listenForEvents() {
-	//console.debug("[EXT::listenForEvents]: BEGIN");
+	debugMsg(79,"[EXT::listenForEvents]: BEGIN");
 
     var observeDOM = (function () {
-		//console.debug("[EXT::listenForEvents::observeDOM]: BEGIN");
+		debugMsg(89,"[EXT::listenForEvents::observeDOM]: BEGIN");
         var MutationObserver = window.MutationObserver || window.WebKitMutationObserver;
 
         return function (obj, callback) {
@@ -21,142 +182,66 @@ function listenForEvents() {
             if (MutationObserver) {
                 // define a new observer
                 var obs = new MutationObserver(function (mutations, observer) {
-                    if (mutations[0].addedNodes.length || mutations[0].removedNodes.length)
+					if (linkedout_TrackingURL != document.location.origin) {
+						linkedout_TrackingURL = document.location.origin;
+						debugMsg(29,"[EXT]: SITE CHANGED");
+						determineSite();
+						if (intervalId === undefined) {
+							debugMsg(99,"[EXT]: Interval id is undefined, checking status");
+							intervalId = setInterval(checkStatus, 200);
+						} else {
+							debugMsg(99,"[EXT]: Interval id is not undefined");
+						}
+					}	
+                    if (mutations[0].addedNodes.length || mutations[0].removedNodes.length) {
                         callback(mutations[0]);
-                });
+					}
+				});
                 // have the observer observe foo for changes in children
                 obs.observe(obj, {childList: true, subtree: true});
             }
-
             else if (window.addEventListener) {
                 obj.addEventListener('DOMNodeInserted', callback, false);
             }
         }
-		//console.debug("[EXT::listenForEvents::observeDOM]: END");
+		debugMsg(99,"[EXT::listenForEvents::observeDOM]: END");
     })();
-
-    function getDivsWithDataIdAttribute() {
-		//console.debug("[EXT::listenForEvents::getDivsWithDataIdAttribute]: BEGIN");
-
-        var coreRail = document.getElementsByClassName("core-rail")[0];
-        var result = $(coreRail).find("div[data-id]").toArray();
-
-		//console.debug("[EXT::listenForEvents::getDivsWithDataIdAttribute]: RESULT = " + result);
-        return result === undefined ? Array() : result;
-    }
 	
-	function countAll(element,objectType) {
-		//console.debug("[EXT::listenForEvents::countAll("+objectType+")]: BEGIN");
-		var p = $(element).find(objectType).toArray();
-		//console.debug("[EXT::listenForEvents::countAll("+objectType+")]: END = " + p);
-		return ( p === undefined ) ? 0 : p.length; 
-	}
-
-	function isPromotionalAd(element) {
-		//console.debug("[EXT::listenForEvents::isPromotionalAd("+element["data-id"]+")]: BEGIN");
-		var found = countAll(element,"li.option-ad_choice")
-			+ countAll(element,"button.option-button__ad_choice");
-		//console.debug("[EXT::listenForEvents::isPromotionalAd("+element["data-id"]+")]: RESULT = " + found);
-		return found > 0;
-	}
-
-    function addHideButton(element) {
-		//console.debug("[EXT::listenForEvents::addHideButton("+element["data-id"]+")]: BEGIN");
-        var btn = document.createElement("INPUT");
-        btn.setAttribute("type", "button");
-        btn.setAttribute("value", "hide");
-        btn.classList.add("hide-article-button");
-        btn.classList.add("button-reset");
-        btn.addEventListener("click", function () {
-            if (element !== undefined) {
-                // find the original button for hiding and click on it
-                var liOption = element.querySelector("li.option-hide-update");
-                var artdecoButtonItem = liOption.querySelector("artdeco-dropdown-item");
-                artdecoButtonItem.click();
-                // hide the custom button
-                btn.style.display = "none";
-            }
-        });
-        element.appendChild(btn);
-		//console.debug("[EXT::listenForEvents::addHideButton("+element["data-id"]+")]: END");
-    }
-	
-	function processFeed() {
-		//console.debug("[EXT::listenForEvents::processFeed]: BEGIN");
-        var elementsWithDataIdAttribute = getDivsWithDataIdAttribute("div", "data-id");
-    	currentAds = 0;
-		elementsWithDataIdAttribute.forEach(function (element) {
-			if ( isPromotionalAd(element) ) {
-				var containsButton = false; //countAll(element,"input.hide-article-button") > 0;
-				
-				var children = element.childNodes;
-				for (var i = 0; i < children.length; i++) {
-					if (children[i].classList !== undefined &&
-						children[i].classList.contains("hide-article-button")) {
-						containsButton = true;
-						break;
-					}
-				}
-				
-				if (!containsButton) {
-					currentAds ++;
-					totalAds ++;
-					addHideButton(element);
-					console.debug("[EXT::listenForEvents::processFeed]: updateBadgeCount("+totalAds+")");
-					chrome.runtime.sendMessage({
-						"action" : "updateCount",
-						"value" : totalAds
-					});
-					element.style.display = "none";
-				}
-			}
-        });
-		if ( currentAds > 0 ) {
-			console.debug("[EXT::listenForEvents::processFeed]: currentAds="+currentAds+", totalAds="+totalAds);
-		}
-		//console.debug("[EXT::listenForEvents::processFeed]: END");
-	}
-	
-    // there is only one coreRail element on the page
-    var coreRail = document.getElementsByClassName("core-rail")[0];
-    // add hide button to elements that already exist in core-rail
+    // there is only one mainFeed element on the page
+    var mainFeed = document.getElementsByClassName(linkedout_FeedContainer)[0];
+    // add hide button to elements that already exist in main feed
  	processFeed();
     // start listening for events
-    //console.debug("[EXT::listenForEvents]: Observing DOM...");
-    observeDOM(coreRail, function () {
-		//console.debug("[EXT::listenForEvents::observeDOM]: BEGIN");
-		processFeed();
-		//console.debug("[EXT::listenForEvents::observeDOM]: END");
+    observeDOM(mainFeed, function () {
+		debugMsg(89,"[EXT::listenForEvents]: Observing DOM...");
+ 		processFeed();
     });
-
-	//console.debug("[EXT::listenForEvents]: END");
+	debugMsg(99,"[EXT::listenForEvents]: END");
 }
 
 function addListenerForHomeButton() {
-    //console.debug("[EXT::addListenerForHomeButton]: BEGIN");
-    var homeButton = document.getElementById("feed-nav-item");
-    homeButton.addEventListener("click", function () {
-
-        var intervalId = undefined;
-
-        function checkStatus() {
-			//console.debug("[EXT::addListenerForHomeButton::checkStatus]: BEGIN");
-            var coreRail = document.getElementsByClassName("core-rail")[0];
-            if (coreRail !== undefined &&
-                coreRail.children !== undefined &&
-                coreRail.children.length <= 2) {
-                console.debug("[EXT::ListenerForHomeButton::checkStatus]: Core rail still not ready, waiting...");
-            } else {
-                console.debug("[EXT::ListenerForHomeButton::checkStatus]: Core rail is ready, it has " + coreRail.children.length + " elements");
-                clearInterval(intervalId);
-                listenForEvents();
-            }
-			//console.debug("[EXT::addListenerForHomeButton::checkStatus]: END");
-        }
-
-        intervalId = setInterval(checkStatus, 200);
-    });
-    //console.debug("[EXT::addListenerForHomeButton]: END");
+    debugMsg(79,"[EXT::addListenerForHomeButton]: BEGIN");
+    var homeButton = document.getElementById(linkedout_HomeButton);
+	if ( homeButton !== undefined ) {
+		debugMsg(99,"[EXT::addListenerForHomeButton]: FOUND");
+		homeButton.addEventListener("click", function () {
+			var intervalId = undefined;
+			function checkStatus() {
+				debugMsg(99,"[EXT::addListenerForHomeButton::checkStatus]: BEGIN");
+				var mainFeed = document.getElementsByClassName(linkedout_FeedContainer)[0];
+				if (mainFeed === undefined || mainFeed.children === undefined || mainFeed.children.length <= 2) {
+					debugMsg(89,"[EXT::ListenerForHomeButton::checkStatus]: Main Feed ("+linkedout_FeedContainer+") still not ready, waiting...");
+				} else {
+					debugMsg(89,"[EXT::ListenerForHomeButton::checkStatus]: Main Feed ("+linkedout_FeedContainer+") is ready, it has " + mainFeed.children.length + " elements");
+					clearInterval(intervalId);
+					listenForEvents();
+				}
+				debugMsg(99,"[EXT::addListenerForHomeButton::checkStatus]: END");
+			}
+			intervalId = setInterval(checkStatus, 200);
+		});
+	}
+    debugMsg(99,"[EXT::addListenerForHomeButton]: END");
 }
 
 /**
@@ -167,7 +252,7 @@ function addListenerForHomeButton() {
 var intervalId = undefined;
 
 function checkStatus() {
-    //console.debug("[EXT::checkStatus]: BEGIN");
+    debugMsg(79,"[EXT::checkStatus]: BEGIN");
 
     /*
      Although the document.readyState should be 'complete' at this point,
@@ -175,46 +260,147 @@ function checkStatus() {
      a document takes a lot of time to load
      (see https://developer.chrome.com/extensions/content_scripts#run_time)
      */
+    debugMsg(99,"[EXT::checkStatus]: Document ready state = " + document.readyState);
+	/*
     if (document.readyState !== "complete") {
-        console.debug("[EXT::checkStatus]: Document not yet ready, waiting...");
-        return;
+        debugMsg(89,"[EXT::checkStatus]: Document not yet ready, waiting...");
     }
-    var coreRail = document.getElementsByClassName("core-rail")[0];
+	else 
+	*/
+	if ( linkedout_FeedContainer === undefined ) {
+        debugMsg(89,"[EXT::checkStatus]: Document ready, site not determined...");
+	}
+	else {
+		var mainFeed = document.getElementsByClassName(linkedout_FeedContainer)[0];
+		if (mainFeed === undefined || mainFeed.children === undefined || mainFeed.children.length <= 2) {
+			debugMsg(89,"[EXT::checkStatus]: Main Feed ("+linkedout_FeedContainer+") still not ready, waiting...");
+		} else {
+			debugMsg(89,"[EXT::checkStatus]: Main Feed ("+linkedout_FeedContainer+") is ready, it has " + mainFeed.children.length + " elements");
+			clearInterval(intervalId);
+			intervalId = undefined;
+			addListenerForHomeButton();
+			listenForEvents();
+		}
+	}	
+    debugMsg(99,"[EXT::checkStatus]: END");
+}
 
-    if (coreRail !== undefined &&
-        coreRail.children !== undefined
-        && coreRail.children.length <= 2) {
-        console.debug("[EXT::checkStatus]: Core rail still not ready, waiting...");
-    } else {
-        console.debug("[EXT::checkStatus]: Corerail is ready, it has " + coreRail.children.length + " elements");
-        clearInterval(intervalId);
-        intervalId = undefined;
-        addListenerForHomeButton();
-        listenForEvents();
+function determineSite() {
+    debugMsg(79,"[EXT::determineSite]: BEGIN");
+	// check for new site
+    if (linkedout_TrackingURL !== undefined ) {
+		debugMsg(89,"[EXT::determineSite]: URL = " + linkedout_TrackingURL);
+		if ( linkedout_TrackingURL.startsWith("https://www.linkedin.com")) {
+			linkedout_TrackingSite = "LinkedIn";
+			linkedout_FeedContainer = "core-rail";
+			linkedout_HomeButton = "feed-nav-item";
+		}
+		else if ( linkedout_TrackingURL.startsWith("https://twitter.com")) {
+			linkedout_TrackingSite = "Twitter";
+			linkedout_FeedContainer = "stream-items";
+			linkedout_HomeButton = "global-nav-home";
+		}
     }
-    //console.debug("[EXT::checkStatus]: END");
+	enableIcon();
+    debugMsg(69,"[EXT::determineSite]: RESULT = " + linkedout_TrackingSite);
 }
 
 var listener = function() {
-    //console.debug("[EXT::listener]: BEGIN");
-    var newUrl = window.location.href;
-    if (newUrl !== undefined && newUrl.startsWith("https://www.linkedin.com/feed")) {
-        console.debug("[EXT::listener]: Starting to listen for events");
-        if (intervalId === undefined) {
-            console.debug("Interval id is undefined, checking status");
-            intervalId = setInterval(checkStatus, 200);
-        } else {
-            console.debug("[EXT::listener]: Interval id is defined");
-        }
-    }
-    //console.debug("[EXT::listener]: END");
+    debugMsg(79,"[EXT::listener]: BEGIN");
+	determineSite();
+	if ( linkedout_TrackingSite ) {
+		if (intervalId === undefined) {
+			debugMsg(89,"[EXT::listener]: Interval id is undefined, checking status");
+			intervalId = setInterval(checkStatus, 200);
+		} else {
+			debugMsg(89,"[EXT::listener]: Interval id is defined");
+		}
+	}
+    debugMsg(99,"[EXT::listener]: END");
 };
 
-window.addEventListener('popstate', listener);
-
-if (intervalId === undefined) {
-    console.debug("[EXT]: Interval id is undefined, checking status");
-    intervalId = setInterval(checkStatus, 200);
-} else {
-    console.debug("[EXT]: Interval id is not undefined");
+function initExtension() {
+	resetGlobals();
+	determineSite();
+	window.addEventListener('popstate', listener);
+	if (intervalId === undefined) {
+		debugMsg(89,"[EXT]: Interval id is undefined, checking status");
+		intervalId = setInterval(checkStatus, 200);
+	} else {
+		debugMsg(89,"[EXT]: Interval id is not undefined");
+	}
 }
+
+function onNotify(message) {
+	debugMsg(99,"[EXT::onNotify]: BEGIN");
+	if ( message ) {
+		debugMsg(69,"[EXT::onNotify]: action = " + message.action);
+		if (message.action === "reset" ) {
+			initExtension();
+		}
+		else if (message.action === "parsePage" ) {
+			processFeed();
+		}
+		else if (message.action === "showTattoo" ) {
+			linkedout_opt.Tattoo = true;
+			$(".linkedout-tattoo").css("display", linkedout_opt.Tattoo ? "block" : "none" );
+			saveOptions();
+		}
+		else if (message.action === "showAds" ) {
+			linkedout_opt.AutoHide = false;
+			$(".linkedout-class").css("display", linkedout_opt.AutoHide ? "none" : "block");
+			saveOptions();
+		}
+		else if (message.action === "hideTattoo" ) {
+			linkedout_opt.Tattoo = false;
+			$(".linkedout-tattoo").css("display", linkedout_opt.Tattoo ? "block" : "none" );
+			saveOptions();
+		}
+		else if (message.action === "hideAds" ) {
+			linkedout_opt.AutoHide = true;
+			$(".linkedout-class").css("display", linkedout_opt.AutoHide ? "none" : "block");
+			saveOptions();
+		}
+	}
+	debugMsg(99,"[EXT::onNotify]: END");
+}
+
+function enableIcon() {
+	chrome.runtime.sendMessage({
+		"action" : "enableIcon",
+		"value" : (linkedout_TrackingURL !== undefined)
+	});
+	chrome.runtime.sendMessage({
+		"action" : "updateCount",
+		"value" : linkedout_TotalAds
+	});
+}
+
+function disableIcon() {
+	// update icon
+	chrome.runtime.sendMessage({
+		"action" : "updateCount",
+		"value" : ""
+	});
+	chrome.runtime.sendMessage({
+		"action" : "enableIcon",
+		"value" : false
+	});
+}
+
+window.addEventListener('focus', function() {
+	debugMsg(999,"[EXT]: FOCUS " + linkedout_TrackingURL);
+	// slightly delay to ensure old window's blur function has completed
+	if ( document.hasFocus() ) setTimeout(enableIcon,250);
+});
+
+window.addEventListener('blur', function() {
+	debugMsg(999,"[EXT]: BLUR " + linkedout_TrackingURL);
+	//disableIcon();
+});
+
+// STARTUP HERE
+debugMsg(99,"[EXT]: INITIALIZING ...");
+chrome.runtime.onMessage.addListener(onNotify);
+initExtension();
+debugMsg(99,"[EXT]: INITIALIZAION COMPLETE");

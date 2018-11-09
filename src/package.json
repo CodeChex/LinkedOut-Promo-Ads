@@ -1,7 +1,7 @@
 {
-  "name": "linkedin_hide_promos",
-  "version": "0.3.0",
-  "description": "Automatically hide promotional ads from LinkedIn feed",
+  "name": "NoMore_Promo_Ads",
+  "version": "0.5.0",
+  "description": "Automatically hide promotional ads from various social media feeds",
   "main": "script.js",
   "dependencies": {},
   "devDependencies": {
@@ -10,7 +10,7 @@
     "gulp-uglify": "^3.0.1",
     "gulp-zip": "^4.2.0"
   },
-  "repository": "https://github.com/checco/linkedin-hide-promos.git",
+  "repository": "https://github.com/CodeChex/LinkedOut-Promo-Ads",
   "author": "John C. Checco",
   "license": "ISC"
 }
