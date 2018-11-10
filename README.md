@@ -16,6 +16,9 @@ Adds a button for automatic hiding of promotional ads on LinkedIn's homepage.
 and click **Add to Chrome**
 
 ## History
+### Version 0.5.1
+- fixed icon enabled status 
+
 ### Version 0.5.0
 - total rewrite 
 - added toggling of ads/tattoos
@@ -29,7 +32,4 @@ and click **Add to Chrome**
 * Chrome
   * Type `chrome://extensions/` in the address bar and hit `Enter` -> Load unpacked -> Select source directory
 
-#### Based on the [LinkedIn-Hide-Article-Button](https://github.com/daniloradenovic/linkedin-hide-article-button) from:
-* [Anja Stanojevic](https://www.linkedin.com/in/anja-stanojevic-459a5631/)
-* [Tomo Radenovic](https://www.linkedin.com/in/tomo-radenovic-a59a4971/)
-* [Danilo Radenovic](https://www.daniloradenovic.com)
+Based on the [LinkedIn-Hide-Article-Button](https://github.com/daniloradenovic/linkedin-hide-article-button) from:
