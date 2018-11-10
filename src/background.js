@@ -1,9 +1,8 @@
 
 
 chrome.runtime.onMessage.addListener(function(message, sender) {
-	//console.debug("[BACKGROUND::onMessage]: BEGIN");
 	if ( message ) {
-		console.debug("[BACKGROUND::onMessage]: action = " + message.action);
+		//console.debug("[BACKGROUND::onMessage]: action = " + message.action);
 		if ( message.action === "enableIcon" ) {
 			if ( message.value === true ) chrome.browserAction.enable();
 			else chrome.browserAction.disable();
@@ -12,5 +11,11 @@ chrome.runtime.onMessage.addListener(function(message, sender) {
 			chrome.browserAction.setBadgeText({text: message.value.toString()});
 		}
 	}
-	//console.debug("[BACKGROUND::onMessage]: END");
 });
+
+chrome.tabs.onActivated.addListener( (activeInfo) => {
+	//console.debug("[BACKGROUND::tabs.onActivated]: " + activeInfo.tabId);
+	chrome.browserAction.disable();
+	chrome.browserAction.setBadgeText({text: ""});
+});
+

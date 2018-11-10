@@ -1,5 +1,9 @@
 /* 
 Copyleft (c) 2018, Checco Computer Services
+
+Version 0.5.1
+- fixed icon enabled status 
+
 Version 0.5.0
 - total rewrite 
 - added toggling of ads/tattoos
@@ -20,7 +24,7 @@ var linkedout_HomeButton = undefined;
 var linkedout_opt = {
 	Tattoo : true,
 	AutoHide : false,
-	Debug : 69
+	Debug : 0
 };
 
 function debugMsg(minLevel,msg) {
@@ -49,7 +53,7 @@ function resetGlobals() {
 	linkedout_TrackingSite = undefined;
 	linkedout_FeedContainer = undefined;
 	linkedout_HomeButton = undefined;
-	disableIcon();
+	//disableIcon();
 	//restoreOptions();
 }
 
@@ -62,12 +66,12 @@ function countAll(element,objectType) {
 
 function getPromotionList() {
 	var result = Array();
-	debugMsg(79,"[EXT::getPromotionList]: BEGIN");
+	debugMsg(89,"[EXT::getPromotionList]: BEGIN");
 	var mainFeed = document.getElementsByClassName(linkedout_FeedContainer)[0];
 	if ( linkedout_TrackingSite === "LinkedIn" ) {
 		var items = $(mainFeed).find("div[data-id]").toArray();
 		if ( items !== undefined ) {
-			debugMsg(69,"[EXT::getPromotionList]: parsing ["+items.length+"] LinkedIn items");
+			debugMsg(79,"[EXT::getPromotionList]: parsing ["+items.length+"] LinkedIn items");
 			items.forEach(function(item) {
 				// check for drop down selections pointing to ad_choices
 				if ( countAll(item,"li.option-ad_choice") > 0 || countAll(item,"button.option-button__ad_choice") > 0 ) {
@@ -148,10 +152,10 @@ function markElement(element) {
 }
 
 function processFeed() {
-	debugMsg(79,"[EXT::processFeed]: BEGIN");
+	debugMsg(89,"[EXT::processFeed]: BEGIN");
 	var tPromotionList = getPromotionList();
 	var nCountAds = 0;
-	debugMsg(69,"[EXT::processFeed]: checking [" + tPromotionList.length + "] ads ");
+	debugMsg(79,"[EXT::processFeed]: checking [" + tPromotionList.length + "] ads ");
 	tPromotionList.forEach(function (element) {
 		if (!isMarked(element)) {
 			nCountAds ++;
@@ -159,7 +163,7 @@ function processFeed() {
 			markElement(element);
 		}
 	});
-	debugMsg(89,"[EXT::processFeed]: nCountAds=" + nCountAds + ", TotalAds=" +linkedout_TotalAds);
+	debugMsg(59,"[EXT::processFeed]: nCountAds=" + nCountAds + ", TotalAds=" +linkedout_TotalAds);
 	if ( nCountAds > 0 ) {
 		chrome.runtime.sendMessage({
 			"action" : "updateCount",
@@ -300,9 +304,10 @@ function determineSite() {
 			linkedout_FeedContainer = "stream-items";
 			linkedout_HomeButton = "global-nav-home";
 		}
+		linkedout_TotalAds = document.getElementsByClassName("linkedout-class").length;
     }
 	enableIcon();
-    debugMsg(69,"[EXT::determineSite]: RESULT = " + linkedout_TrackingSite);
+    debugMsg(79,"[EXT::determineSite]: RESULT = " + linkedout_TrackingSite);
 }
 
 var listener = function() {
@@ -331,10 +336,10 @@ function initExtension() {
 	}
 }
 
-function onNotify(message) {
+function onNotify(message, sender, sendResponse) {
 	debugMsg(99,"[EXT::onNotify]: BEGIN");
 	if ( message ) {
-		debugMsg(69,"[EXT::onNotify]: action = " + message.action);
+		debugMsg(59,"[EXT::onNotify]: action = " + message.action);
 		if (message.action === "reset" ) {
 			initExtension();
 		}
@@ -376,27 +381,9 @@ function enableIcon() {
 	});
 }
 
-function disableIcon() {
-	// update icon
-	chrome.runtime.sendMessage({
-		"action" : "updateCount",
-		"value" : ""
-	});
-	chrome.runtime.sendMessage({
-		"action" : "enableIcon",
-		"value" : false
-	});
-}
-
 window.addEventListener('focus', function() {
-	debugMsg(999,"[EXT]: FOCUS " + linkedout_TrackingURL);
-	// slightly delay to ensure old window's blur function has completed
-	if ( document.hasFocus() ) setTimeout(enableIcon,250);
-});
-
-window.addEventListener('blur', function() {
-	debugMsg(999,"[EXT]: BLUR " + linkedout_TrackingURL);
-	//disableIcon();
+	debugMsg(99,"[EXT]: FOCUS " + linkedout_TrackingURL);
+	enableIcon();
 });
 
 // STARTUP HERE
