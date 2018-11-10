@@ -32,4 +32,4 @@ and click **Add to Chrome**
 * Chrome
   * Type `chrome://extensions/` in the address bar and hit `Enter` -> Load unpacked -> Select source directory
 
-Based on the [LinkedIn-Hide-Article-Button](https://github.com/daniloradenovic/linkedin-hide-article-button) from:
+Based on the [LinkedIn-Hide-Article-Button](https://github.com/daniloradenovic/linkedin-hide-article-button) 
