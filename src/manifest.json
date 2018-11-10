@@ -1,11 +1,11 @@
 {
-  "name": "NoMore_Promo_Ads",
+  "name": "LinkedIn hide promotional ads",
   "version": "0.5.0",
   "description": "Automatically hide promotional ads from various social media feeds",
   "homepage_url": "https://github.com/CodeChex/LinkedOut-Promo-Ads",
   "manifest_version": 2,
   "permissions": [ 
-	"activeTab", "storage"
+	"activeTab"
   ],
   "content_scripts": [
     {
