@@ -1,6 +1,6 @@
-# ![Linkedin hide promotional ads logo](src/icons/icon48x48.png) LinkedIn hide promotional ads
+# ![LinkedOut hide promotional ads logo](src/icons/icon48x48.png) LinkedOut - Hide "Promoted Ads" from your socila meda feed
 
-Adds a button for automatic hiding of promotional ads on LinkedIn's homepage. 
+Adds a button for automatic hiding of promotional ads on various social media feeds (LinkedIn/Twitter). 
 
 ## Supported browsers
 ![Firefox](https://upload.wikimedia.org/wikipedia/commons/thumb/6/67/Firefox_Logo%2C_2017.svg/64px-Firefox_Logo%2C_2017.svg.png)
