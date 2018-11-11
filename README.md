@@ -1,4 +1,4 @@
-# ![LinkedOut hide promotional ads logo](src/icons/icon48x48.png) LinkedOut - Hide "Promoted Ads" from your socila meda feed
+# ![LinkedOut hide promotional ads logo](src/icons/icon48x48.png) LinkedOut - Hide "Promoted Ads" in social meda feeds
 
 Adds a button for automatic hiding of promotional ads on various social media feeds (LinkedIn/Twitter). 
 
