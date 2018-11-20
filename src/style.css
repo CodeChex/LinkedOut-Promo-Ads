@@ -1,4 +1,4 @@
-.linkedout-tattoo {
+.linkedout-stopsign {
 	position: absolute;
 	top: -5px;
 	left: -5px;
@@ -37,6 +37,56 @@
 	color: white;
 	height: 30px;
 	width: 30px;
+}
+
+.chrome-tattoo {
+	position: absolute;
+	top: -15px;
+	left: -15px;
+	z-index: 100;
+	cursor: pointer;
+    background: url(chrome-extension://__MSG_@@extension_id__/images/cluster_brown_1.png);
+	background-repeat: no-repeat;
+	display: block;
+	text-align: center;
+	vertical-align: middle;
+	font-family: Arial;
+	font-weight: bold;
+	font-size: 75%;
+	line-height: 75%;
+	color: white;
+	height: 53px;
+	width: 52px;
+}
+
+.chrome-tattoo:hover {
+    background: url(chrome-extension://__MSG_@@extension_id__/images/cluster_orange_1.png);
+	color: black;
+}
+
+.mozilla-tattoo {
+	position: absolute;
+	top: -15px;
+	left: -15px;
+	z-index: 100;
+	cursor: pointer;
+    background: url(images/cluster_brown_1.png);
+	background-repeat: no-repeat;
+	display: block;
+	text-align: center;
+	vertical-align: middle;
+	font-family: Arial;
+	font-weight: bold;
+	font-size: 75%;
+	line-height: 75%;
+	color: white;
+	height: 53px;
+	width: 52px;
+}
+
+.mozilla-tattoo:hover {
+    background: url(images/cluster_orange_1.png);
+	color: black;
 }
 
 .linkedout-class {

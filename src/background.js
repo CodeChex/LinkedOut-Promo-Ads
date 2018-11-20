@@ -1,5 +1,4 @@
 
-
 chrome.runtime.onMessage.addListener(function(message, sender) {
 	if ( message ) {
 		//console.debug("[BACKGROUND::onMessage]: action = " + message.action);
@@ -13,6 +12,7 @@ chrome.runtime.onMessage.addListener(function(message, sender) {
 	}
 });
 
+// always disable when changing tabs, inline script will enable it
 chrome.tabs.onActivated.addListener( (activeInfo) => {
 	//console.debug("[BACKGROUND::tabs.onActivated]: " + activeInfo.tabId);
 	chrome.browserAction.disable();

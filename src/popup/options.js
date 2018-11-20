@@ -1,21 +1,76 @@
+var linkedout_Browser = (typeof browser === "undefined" || Object.getPrototypeOf(browser) !== Object.prototype) ? "chrome" : "mozilla";
+
+// options
+var opt = {
+	Tattoo : false,
+	AutoHide : false,
+	Debug : 999
+};
+restoreOptions();
+
+function onError(error) {
+	console.debug(`Error: ${error}`);
+}
+
+function saveOptions() {
+	opt.AutoHide = document.getElementsByName("hideAds")[0].checked;
+	opt.Tattoo = document.getElementsByName("showTattoo")[0].checked;
+	opt.Debug = document.getElementsByName("debugLevel")[0].value;
+	console.debug("[POPUP::onClick]: saveOptions = " 
+				+ "\n\t hide=" + opt.AutoHide 
+				+ "\n\t tattoo=" + opt.Tattoo
+				+ "\n\t debug=" + opt.Debug);
+	if (linkedout_Browser === "chrome") {
+		chrome.storage.local.set(opt);
+	}
+	else {
+		browser.storage.local.set(opt);
+	}
+}
+
+function restoreOptions() {
+	function loadOptions(result) {
+		if ( result ) {
+			opt = result;
+			console.debug("[POPUP::onClick]: loadOptions = " 
+					+ "\n\t hide=" + opt.AutoHide 
+					+ "\n\t tattoo=" + opt.Tattoo
+					+ "\n\t debug=" + opt.Debug);
+			document.getElementsByName("hideAds")[0].checked = opt.AutoHide;
+			document.getElementsByName("showTattoo")[0].checked = opt.Tattoo;
+			document.getElementsByName("debugLevel")[0].value = (isNaN(opt.Debug) ? 0 : opt.Debug);
+		}
+	}
+	if (linkedout_Browser === "chrome") {
+		chrome.storage.local.get(null,loadOptions);
+	}
+	else {
+		browser.storage.local.get(null).then(loadOptions, onError);
+	}
+}
 
 /**
  * Listen for clicks on the buttons, and send the appropriate message to
  * the content script in the page.
  */
 document.addEventListener("click", (e) => {
-	var optionName = e.target.id;	
-	console.debug("[POPUP::onClick]: option = " + optionName);
-
-	function processMenu(tabs) {
-		chrome.tabs.sendMessage(tabs[0].id,{ action: optionName });
+	var menuID = e.target.id;
+	
+	function notifyMain(tabs) {
+		chrome.tabs.sendMessage(tabs[0].id, { action: menuID });
 	}
 	
-	if (typeof browser === "undefined" || Object.getPrototypeOf(browser) !== Object.prototype) {
-		chrome.tabs.query({active: true, currentWindow: true}, processMenu );
-	}
-	else {
-		browser.tabs.query({active: true, currentWindow: true} ).then(processMenu);
+	if ( menuID ) { 
+		// save options
+		saveOptions();
+		// notify content
+		if (linkedout_Browser === "chrome") {
+			chrome.tabs.query({active: true, currentWindow: true}, notifyMain );
+		}
+		else {
+			browser.tabs.query({active: true, currentWindow: true} ).then(notifyMain);
+		}
+		window.close();
 	}
 });
 

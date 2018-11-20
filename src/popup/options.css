@@ -1,15 +1,19 @@
 html, body {
-  text-align: center;
-  font-family: Verdana, Tahoma, Arial;
-  font-size: 1.0em;
+  font-family: Calibri, Verdana, Tahoma, Arial;
 }
 
 .byline {
-	font-size: 0.75em;
 	white-space: nowrap;
 }
 
+.choice {
+  text-align: left;
+  padding: 4px;
+  white-space: nowrap;
+}
+
 .button {
+  text-align: center;
   margin: 3% auto;
   padding: 4px;
   cursor: pointer;
@@ -21,6 +25,7 @@ html, body {
 }
 
 .menu {
+  text-align: center;
   background-color: #E5F2F2;
 }
 

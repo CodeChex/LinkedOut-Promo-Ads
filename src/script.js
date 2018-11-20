@@ -1,6 +1,10 @@
 /* 
 Copyleft (c) 2018, Checco Computer Services
 
+Version 0.6.0
+- allow saving/loading of options 
+- changed tattoo from stopsign to cluster marker
+
 Version 0.5.1
 - fixed icon enabled status 
 
@@ -20,41 +24,52 @@ var linkedout_TotalAds = -1;
 var linkedout_TrackingSite = undefined;
 var linkedout_FeedContainer = undefined;
 var linkedout_HomeButton = undefined;
+var linkedout_Browser = (typeof browser === "undefined" || Object.getPrototypeOf(browser) !== Object.prototype) ? "chrome" : "mozilla";
+var linkedout_TattooClass = linkedout_Browser + "-tattoo";
+
 // options
-var linkedout_opt = {
+var opt = {
 	Tattoo : true,
 	AutoHide : false,
-	Debug : 0
+	Debug : 999
 };
 
 function debugMsg(minLevel,msg) {
-	if (linkedout_opt.Debug >= minLevel) console.debug("(" + minLevel + ")-" + msg);
+	if (opt.Debug >= minLevel) console.debug("(" + minLevel + ")-" + msg);
 }
 
 function onError(error) {
-	console.debug(`Error: ${error}`);
-}
-
-function saveOptions() {
-	// chrome.storage.sync.set(linkedout_opt);
+	console.error(`Error: ${error}`);
 }
 
 function restoreOptions() {
-
 	function loadOptions(result) {
-		if ( result ) linkedout_opt = result;
+		if ( result ) {
+			opt = result;
+			$("." + linkedout_TattooClass).css("display", opt.Tattoo ? "block" : "none" );
+			$(".linkedout-class").css("display", opt.AutoHide ? "none" : "block");
+			debugMsg(49,"[EXT]: restoreOptions = " 
+					+ "\n\t hide=" + opt.AutoHide 
+					+ "\n\t tattoo=" + opt.Tattoo
+					+ "\n\t debug=" + opt.Debug);
+		}
 	}
-	// chrome.storage.sync.get(null).then(loadOptions, onError);
+	if (linkedout_Browser === "chrome") {
+		chrome.storage.local.get(null,loadOptions);
+	}
+	else {
+		browser.storage.local.get(null).then(loadOptions, onError);
+	}
 }
 
 function resetGlobals() {
+	disableIcon();
 	linkedout_TrackingURL = document.location.origin;
 	linkedout_TotalAds = 0;
 	linkedout_TrackingSite = undefined;
 	linkedout_FeedContainer = undefined;
 	linkedout_HomeButton = undefined;
-	//disableIcon();
-	//restoreOptions();
+	restoreOptions();
 }
 
 function countAll(element,objectType) {
@@ -107,12 +122,12 @@ function getPromotionList() {
 
 function hasTattoo(element) {
 	debugMsg(99,"[EXT::hasTattoo]: BEGIN");
-	var branded = (countAll(element,"button.linkedout-tattoo") > 0);
+	var branded = (countAll(element,"button." + linkedout_TattooClass) > 0);
 	/*
 	var children = element.childNodes;
 	for (var i = 0; i < children.length; i++) {
 		if (children[i].classList !== undefined &&
-			children[i].classList.contains("linkedout-tattoo")) {
+			children[i].classList.contains(linkedout_TattooClass)) {
 			branded = true;
 			break;
 		}
@@ -135,17 +150,17 @@ function markElement(element) {
 		debugMsg(89,"[EXT::markElement]: Marking");
 		// mark the element
 		element.classList.add("linkedout-class");
-		element.style.display = ( linkedout_opt.AutoHide ? "none" : "block");
+		element.style.display = ( opt.AutoHide ? "none" : "block");
 		// apply tattoo
 		debugMsg(89,"[EXT::markElement]: Tattoo");
 		var btn = document.createElement("button");
-		btn.classList.add("linkedout-tattoo");
+		btn.classList.add(linkedout_TattooClass);
 		btn.classList.add("button-reset");
 		btn.innerText = "AD";
 		btn.addEventListener("click", function () {
 			element.style.display = "none";
 		});
-		btn.style.display = ( linkedout_opt.Tattoo ? "block" : "none");
+		btn.style.display = ( opt.Tattoo ? "block" : "none");
 		element.appendChild(btn);
 	}
 	debugMsg(99,"[EXT::markElement]: END");
@@ -187,9 +202,8 @@ function listenForEvents() {
                 // define a new observer
                 var obs = new MutationObserver(function (mutations, observer) {
 					if (linkedout_TrackingURL != document.location.origin) {
-						linkedout_TrackingURL = document.location.origin;
 						debugMsg(29,"[EXT]: SITE CHANGED");
-						determineSite();
+						determineSite(true);
 						if (intervalId === undefined) {
 							debugMsg(99,"[EXT]: Interval id is undefined, checking status");
 							intervalId = setInterval(checkStatus, 200);
@@ -284,13 +298,17 @@ function checkStatus() {
 			intervalId = undefined;
 			addListenerForHomeButton();
 			listenForEvents();
+			chrome.runtime.onMessage.addListener(onNotify);
 		}
 	}	
     debugMsg(99,"[EXT::checkStatus]: END");
 }
 
-function determineSite() {
+function determineSite(doReset) {
     debugMsg(79,"[EXT::determineSite]: BEGIN");
+	if ( doReset ) { 	
+		resetGlobals();
+	}
 	// check for new site
     if (linkedout_TrackingURL !== undefined ) {
 		debugMsg(89,"[EXT::determineSite]: URL = " + linkedout_TrackingURL);
@@ -312,7 +330,7 @@ function determineSite() {
 
 var listener = function() {
     debugMsg(79,"[EXT::listener]: BEGIN");
-	determineSite();
+	determineSite(false);
 	if ( linkedout_TrackingSite ) {
 		if (intervalId === undefined) {
 			debugMsg(89,"[EXT::listener]: Interval id is undefined, checking status");
@@ -325,8 +343,7 @@ var listener = function() {
 };
 
 function initExtension() {
-	resetGlobals();
-	determineSite();
+	determineSite(true);
 	window.addEventListener('popstate', listener);
 	if (intervalId === undefined) {
 		debugMsg(89,"[EXT]: Interval id is undefined, checking status");
@@ -346,28 +363,22 @@ function onNotify(message, sender, sendResponse) {
 		else if (message.action === "parsePage" ) {
 			processFeed();
 		}
-		else if (message.action === "showTattoo" ) {
-			linkedout_opt.Tattoo = true;
-			$(".linkedout-tattoo").css("display", linkedout_opt.Tattoo ? "block" : "none" );
-			saveOptions();
-		}
-		else if (message.action === "showAds" ) {
-			linkedout_opt.AutoHide = false;
-			$(".linkedout-class").css("display", linkedout_opt.AutoHide ? "none" : "block");
-			saveOptions();
-		}
-		else if (message.action === "hideTattoo" ) {
-			linkedout_opt.Tattoo = false;
-			$(".linkedout-tattoo").css("display", linkedout_opt.Tattoo ? "block" : "none" );
-			saveOptions();
-		}
-		else if (message.action === "hideAds" ) {
-			linkedout_opt.AutoHide = true;
-			$(".linkedout-class").css("display", linkedout_opt.AutoHide ? "none" : "block");
-			saveOptions();
+		else if (message.action === "applyOptions" ) {
+			restoreOptions();
 		}
 	}
 	debugMsg(99,"[EXT::onNotify]: END");
+}
+
+function disableIcon() {
+	chrome.runtime.sendMessage({
+		"action" : "enableIcon",
+		"value" : false
+	});
+	chrome.runtime.sendMessage({
+		"action" : "updateCount",
+		"value" : "-"
+	});
 }
 
 function enableIcon() {
@@ -388,6 +399,5 @@ window.addEventListener('focus', function() {
 
 // STARTUP HERE
 debugMsg(99,"[EXT]: INITIALIZING ...");
-chrome.runtime.onMessage.addListener(onNotify);
 initExtension();
 debugMsg(99,"[EXT]: INITIALIZAION COMPLETE");
