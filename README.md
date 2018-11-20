@@ -16,6 +16,10 @@ Adds a button for automatic hiding of promotional ads on various social media fe
 and click **Add to Chrome**
 
 ## History
+### Version 0.6.0
+- allow saving/loading of options 
+- changed tattoo from stopsign to cluster marker
+
 ### Version 0.5.1
 - fixed icon enabled status 
 
