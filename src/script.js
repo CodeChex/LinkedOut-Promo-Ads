@@ -1,9 +1,12 @@
 /* 
 Copyleft (c) 2018, Checco Computer Services
 
+Version 0.6.1
+- changed tattoo verbiage from "AD" to a counter
+
 Version 0.6.0
 - allow saving/loading of options 
-- changed tattoo from stopsign to cluster marker
+- changed tattoo from stop-sign to cluster marker
 
 Version 0.5.1
 - fixed icon enabled status 
@@ -156,7 +159,7 @@ function markElement(element) {
 		var btn = document.createElement("button");
 		btn.classList.add(linkedout_TattooClass);
 		btn.classList.add("button-reset");
-		btn.innerText = "AD";
+		btn.innerText = linkedout_TotalAds.toString(); // "AD";
 		btn.addEventListener("click", function () {
 			element.style.display = "none";
 		});

@@ -18,4 +18,3 @@ chrome.tabs.onActivated.addListener( (activeInfo) => {
 	chrome.browserAction.disable();
 	chrome.browserAction.setBadgeText({text: ""});
 });
-
