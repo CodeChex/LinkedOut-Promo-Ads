@@ -16,6 +16,9 @@ Adds a button for automatic hiding of promotional ads on various social media fe
 and click **Add to Chrome**
 
 ## History
+### Version 0.6.2
+- wrap ads with dotted outline
+
 ### Version 0.6.1
 - changed tattoo verbiage from "AD" to a counter
 
