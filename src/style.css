@@ -93,5 +93,8 @@
     /* 
 	display: block; 
 	*/
+	border-style: dotted;
+	border-width: 3px;
+	border-color: brown;
 }
 
