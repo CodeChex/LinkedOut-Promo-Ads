@@ -1,6 +1,6 @@
 {
 	"name": "LinkedOut - Hide Promotional Ads",
-	"version": "0.6.3",
+	"version": "0.7.0",
 	"description": "Automatically hide promotional ads from various social media feeds",
 	"homepage_url": "https://github.com/CodeChex/LinkedOut-Promo-Ads",
 	"author": "John C. Checco",
@@ -18,7 +18,9 @@
 			],
 			"matches": [
 				"https://www.linkedin.com/*",
-				"https://twitter.com/*"
+				"https://twitter.com/*",
+				"https://www.facebook.com/*",
+				"https://instagram.com/*"
 			],
 			"run_at": "document_idle"
 		}

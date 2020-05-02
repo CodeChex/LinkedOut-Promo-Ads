@@ -16,6 +16,9 @@ Adds a button for automatic hiding of promotional ads on various social media fe
 and click **Add to Chrome**
 
 ## History
+### Version 0.7.0
+- added support for Facebook "Sponsored Ad"
+
 ### Version 0.6.3
 - updated to find LinkedIn alternate "Promoted" format
 

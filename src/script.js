@@ -4,6 +4,9 @@ Copyleft (c) 2018, Checco Computer Services
 Version [FUTURE]
 - add support for Instagram/Facebook 
 
+Version 0.7.0
+- add support for Facebook "Sponsored" tiles
+
 Version 0.6.3
 - adjusted for LinkedIn new "Promoted" format
 
@@ -31,8 +34,8 @@ Version 0.5.0
 var linkedout_TrackingURL = document.location.origin;
 var linkedout_TotalAds = -1;
 var linkedout_TrackingSite = undefined;
-var linkedout_FeedContainer = undefined;
-var linkedout_HomeButton = undefined;
+var linkedout_FeedContainerQ = undefined;
+var linkedout_HomeButtonQ = undefined;
 var linkedout_Browser = (typeof browser === "undefined" || Object.getPrototypeOf(browser) !== Object.prototype) ? "chrome" : "mozilla";
 var linkedout_TattooClass = linkedout_Browser + "-tattoo";
 
@@ -76,8 +79,8 @@ function resetGlobals() {
 	linkedout_TrackingURL = document.location.origin;
 	linkedout_TotalAds = 0;
 	linkedout_TrackingSite = undefined;
-	linkedout_FeedContainer = undefined;
-	linkedout_HomeButton = undefined;
+	linkedout_FeedContainerQ = undefined;
+	linkedout_HomeButtonQ = undefined;
 	restoreOptions();
 }
 
@@ -88,10 +91,15 @@ function countAll(element,objectType) {
 	return count;
 }
 
+function getMainFeed() {
+	var tFeed = $(linkedout_FeedContainerQ)[0];
+	return tFeed;
+}
+
 function getPromotionList() {
 	var result = Array();
 	debugMsg(89,"[EXT::getPromotionList]: BEGIN");
-	var mainFeed = document.getElementsByClassName(linkedout_FeedContainer)[0];
+	var mainFeed = getMainFeed();
 	if ( linkedout_TrackingSite === "LinkedIn" ) {
 		var items = $(mainFeed).find("div[data-id]").toArray();
 		if ( items !== undefined ) {
@@ -145,8 +153,16 @@ function getPromotionList() {
 		debugMsg(69,"[EXT::getPromotionList]: found ["+result.length+"] Instagram Ads");
 	}
 	else if ( linkedout_TrackingSite === "Facebook" ) {
-		result = $(mainFeed).find("div.promoted-ZZZ").toArray();
-		debugMsg(69,"[EXT::getPromotionList]: found ["+result.length+"] Facebook Ads");
+		var items = $(mainFeed).find("div.sponsored_ad").toArray();
+		if ( items !== undefined ) {
+			debugMsg(79,"[EXT::getPromotionList]: parsing ["+items.length+"] Facebook items");
+			items.forEach(function(item) {
+				// check for class of "sponsored_ad"
+				result.push(item);
+				debugMsg(89,"[EXT::getPromotionList]: found Facebook AD");
+			});
+			debugMsg(69,"[EXT::getPromotionList]: found ["+result.length+"] Facebook Ads");
+		}
 	}
 	debugMsg(99,"[EXT::getPromotionList]: END");
 	return result === undefined ? Array() : result;
@@ -258,7 +274,7 @@ function listenForEvents() {
     })();
 	
     // there is only one mainFeed element on the page
-    var mainFeed = document.getElementsByClassName(linkedout_FeedContainer)[0];
+    var mainFeed = getMainFeed();
     // add hide button to elements that already exist in main feed
  	processFeed();
     // start listening for events
@@ -271,18 +287,18 @@ function listenForEvents() {
 
 function addListenerForHomeButton() {
     debugMsg(79,"[EXT::addListenerForHomeButton]: BEGIN");
-    var homeButton = document.getElementById(linkedout_HomeButton);
+    var homeButton = $(linkedout_HomeButtonQ)[0];
 	if ( homeButton !== undefined ) {
 		debugMsg(99,"[EXT::addListenerForHomeButton]: FOUND");
 		homeButton.addEventListener("click", function () {
 			var intervalId = undefined;
 			function checkStatus() {
 				debugMsg(99,"[EXT::addListenerForHomeButton::checkStatus]: BEGIN");
-				var mainFeed = document.getElementsByClassName(linkedout_FeedContainer)[0];
+				var mainFeed = getMainFeed();
 				if (mainFeed === undefined || mainFeed.children === undefined || mainFeed.children.length <= 2) {
-					debugMsg(89,"[EXT::ListenerForHomeButton::checkStatus]: Main Feed ("+linkedout_FeedContainer+") still not ready, waiting...");
+					debugMsg(89,"[EXT::ListenerForHomeButton::checkStatus]: Main Feed ("+linkedout_FeedContainerQ+") still not ready, waiting...");
 				} else {
-					debugMsg(89,"[EXT::ListenerForHomeButton::checkStatus]: Main Feed ("+linkedout_FeedContainer+") is ready, it has " + mainFeed.children.length + " elements");
+					debugMsg(89,"[EXT::ListenerForHomeButton::checkStatus]: Main Feed ("+linkedout_FeedContainerQ+") is ready, it has " + mainFeed.children.length + " elements");
 					clearInterval(intervalId);
 					listenForEvents();
 				}
@@ -317,15 +333,15 @@ function checkStatus() {
     }
 	else 
 	*/
-	if ( linkedout_FeedContainer === undefined ) {
+	if ( linkedout_FeedContainerQ === undefined ) {
         debugMsg(89,"[EXT::checkStatus]: Document ready, site not determined...");
 	}
 	else {
-		var mainFeed = document.getElementsByClassName(linkedout_FeedContainer)[0];
+		var mainFeed = getMainFeed();
 		if (mainFeed === undefined || mainFeed.children === undefined || mainFeed.children.length <= 2) {
-			debugMsg(89,"[EXT::checkStatus]: Main Feed ("+linkedout_FeedContainer+") still not ready, waiting...");
+			debugMsg(89,"[EXT::checkStatus]: Main Feed ("+linkedout_FeedContainerQ+") still not ready, waiting...");
 		} else {
-			debugMsg(89,"[EXT::checkStatus]: Main Feed ("+linkedout_FeedContainer+") is ready, it has " + mainFeed.children.length + " elements");
+			debugMsg(89,"[EXT::checkStatus]: Main Feed ("+linkedout_FeedContainerQ+") is ready, it has " + mainFeed.children.length + " elements");
 			clearInterval(intervalId);
 			intervalId = undefined;
 			addListenerForHomeButton();
@@ -346,27 +362,27 @@ function determineSite(doReset) {
 		debugMsg(89,"[EXT::determineSite]: URL = " + linkedout_TrackingURL);
 		if ( linkedout_TrackingURL.startsWith("https://www.linkedin.com")) {
 			linkedout_TrackingSite = "LinkedIn";
-			linkedout_FeedContainer = "core-rail";
-			linkedout_HomeButton = "feed-nav-item";
+			linkedout_FeedContainerQ = ".core-rail"; // DOM class
+			linkedout_HomeButtonQ = "#feed-nav-item";
 		}
 		else if ( linkedout_TrackingURL.startsWith("https://twitter.com")) {
 			linkedout_TrackingSite = "Twitter";
-			linkedout_FeedContainer = "stream-items";
-			linkedout_HomeButton = "global-nav-home";
+			linkedout_FeedContainerQ = ".stream-items"; // DOM class
+			linkedout_HomeButtonQ = "#global-nav-home";
+		}
+		else if ( linkedout_TrackingURL.startsWith("https://www.facebook.com")) {
+			linkedout_TrackingSite = "Facebook";
+			linkedout_FeedContainerQ = "#stream_pagelet"; // DOM id
+			// this even necessary?
+			linkedout_HomeButtonQ = "a[data-gt*='home_chrome']";  
+			// div.data-click="home_icon" or a.data-gt="{"chrome_nav_item":"home_chrome"}"
 		}
 		else if ( linkedout_TrackingURL.startsWith("https://instagram.com")) {
 			linkedout_TrackingSite = "Instagram";
-			linkedout_FeedContainer = "zzz";
-			linkedout_HomeButton = "zzz";
+			linkedout_FeedContainerQ = ".zzz";
+			linkedout_HomeButtonQ = ".zzz";
 		}
-		else if ( linkedout_TrackingURL.startsWith("https://facebook.com")) {
-			linkedout_TrackingSite = "Facebook";
-			linkedout_FeedContainer = "zzz";
-			// this even necessary?
-			linkedout_HomeButton = "zzz";  
-			// div.data-click="home_icon" or a.data-gt="{"chrome_nav_item":"home_chrome"}"
-		}
-		linkedout_TotalAds = document.getElementsByClassName("linkedout-class").length;
+		linkedout_TotalAds = $(".linkedout-class").length;
     }
 	enableIcon();
     debugMsg(79,"[EXT::determineSite]: RESULT = " + linkedout_TrackingSite);
