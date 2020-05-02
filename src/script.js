@@ -2,7 +2,10 @@
 Copyleft (c) 2018, Checco Computer Services
 
 Version [FUTURE]
-- add support for Instagram/Facebook 
+- add support for Instagram 
+
+Version 0.7.1
+- upgraded to JQuery-3.5.0-slim
 
 Version 0.7.0
 - add support for Facebook "Sponsored" tiles
