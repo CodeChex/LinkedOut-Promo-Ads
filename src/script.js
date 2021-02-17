@@ -4,6 +4,10 @@ Copyleft (c) 2018, Checco Computer Services
 Version [FUTURE]
 - add support for Instagram 
 
+Version 0.8.0
+- updated to identify LinkedIn feed (class change)
+- upgraded to JQuery-3.5.1-slim
+
 Version 0.7.1
 - upgraded to JQuery-3.5.0-slim
 
@@ -365,7 +369,8 @@ function determineSite(doReset) {
 		debugMsg(89,"[EXT::determineSite]: URL = " + linkedout_TrackingURL);
 		if ( linkedout_TrackingURL.startsWith("https://www.linkedin.com")) {
 			linkedout_TrackingSite = "LinkedIn";
-			linkedout_FeedContainerQ = ".core-rail"; // DOM class
+			//linkedout_FeedContainerQ = ".core-rail"; // DOM class
+			linkedout_FeedContainerQ = ".scaffold-layout__main"; // DOM class
 			linkedout_HomeButtonQ = "#feed-nav-item";
 		}
 		else if ( linkedout_TrackingURL.startsWith("https://twitter.com")) {
