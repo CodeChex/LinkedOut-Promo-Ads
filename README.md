@@ -16,8 +16,17 @@ Adds a button for automatic hiding of promotional ads on various social media fe
 and click **Add to Chrome**
 
 ## History
+### Version 0.9.0
+- removed Twitter, FaceBook, Instagram due to their code obsfucation
+- rewritten to support namespaces
+- updated to identify LinkedIn refresh button 
+- updated to identify LinkedIn home button (class/action change)
+
+### Version 0.8.1
+- minor fix to manifest (to allow saving options)
+
 ### Version 0.8.0
-- updated to identify updated LinkedIn feed class
+- updated to identify new LinkedIn feed class
 - upgraded to JQuery-3.5.1-slim
 
 ### Version 0.7.1

@@ -1,8 +1,11 @@
 /* 
-Copyleft (c) 2018, Checco Computer Services
+Copyleft (c) 2018, 2021, Checco Computer Services
 
-Version [FUTURE]
-- add support for Instagram 
+Version 0.9.0
+- removed Twitter, FaceBook, Instagram due to their code obsfucation
+- rewritten to support namespaces
+- updated to identify LinkedIn refresh button 
+- updated to identify LinkedIn home button (class/action change)
 
 Version 0.8.0
 - updated to identify LinkedIn feed (class change)
@@ -38,23 +41,28 @@ Version 0.5.0
 */
 
 // globals
-var linkedout_TrackingURL = document.location.origin;
-var linkedout_TotalAds = -1;
-var linkedout_TrackingSite = undefined;
-var linkedout_FeedContainerQ = undefined;
-var linkedout_HomeButtonQ = undefined;
-var linkedout_Browser = (typeof browser === "undefined" || Object.getPrototypeOf(browser) !== Object.prototype) ? "chrome" : "mozilla";
-var linkedout_TattooClass = linkedout_Browser + "-tattoo";
-
-// options
-var opt = {
-	Tattoo : true,
-	AutoHide : false,
-	Debug : 999
+var ctx = this;
+var LinkedOut = {
+	TrackingURL		: document.location.origin,
+	TotalAds		: -1,
+	TrackingSite	: undefined,
+	FeedContainerQ	: undefined,
+	HomeButtonQ		: undefined,
+	RefreshButtonQ	: undefined,
+	FeedURL			: undefined,
+	Browser			: (typeof browser === "undefined" || Object.getPrototypeOf(browser) !== Object.prototype) ? "chrome" : "mozilla",
+	TattooClass		: "-tattoo",
+	intervalId 		: undefined,
+	opt : {
+		Tattoo		: true,
+		AutoHide 	: false
+	},
+	DebugLevel 		: 99
 };
+LinkedOut.TattooClass = LinkedOut.Browser + "-tattoo";
 
 function debugMsg(minLevel,msg) {
-	if (opt.Debug >= minLevel) console.debug("(" + minLevel + ")-" + msg);
+	if (ctx.LinkedOut.DebugLevel >= minLevel) console.debug("(" + minLevel + ")-" + msg);
 }
 
 function onError(error) {
@@ -64,16 +72,15 @@ function onError(error) {
 function restoreOptions() {
 	function loadOptions(result) {
 		if ( result ) {
-			opt = result;
-			$("." + linkedout_TattooClass).css("display", opt.Tattoo ? "block" : "none" );
-			$(".linkedout-class").css("display", opt.AutoHide ? "none" : "block");
+			ctx.LinkedOut.opt = result;
+			$("." + ctx.LinkedOut.TattooClass).css("display", ctx.LinkedOut.opt.Tattoo ? "block" : "none" );
+			$(".linkedout-class").css("display", ctx.LinkedOut.opt.AutoHide ? "none" : "block");
 			debugMsg(49,"[EXT]: restoreOptions = " 
-					+ "\n\t hide=" + opt.AutoHide 
-					+ "\n\t tattoo=" + opt.Tattoo
-					+ "\n\t debug=" + opt.Debug);
+					+ "\n\t hide=" + ctx.LinkedOut.opt.AutoHide 
+					+ "\n\t tattoo=" + ctx.LinkedOut.opt.Tattoo);
 		}
 	}
-	if (linkedout_Browser === "chrome") {
+	if (ctx.LinkedOut.Browser === "chrome") {
 		chrome.storage.local.get(null,loadOptions);
 	}
 	else {
@@ -83,11 +90,13 @@ function restoreOptions() {
 
 function resetGlobals() {
 	disableIcon();
-	linkedout_TrackingURL = document.location.origin;
-	linkedout_TotalAds = 0;
-	linkedout_TrackingSite = undefined;
-	linkedout_FeedContainerQ = undefined;
-	linkedout_HomeButtonQ = undefined;
+	ctx.LinkedOut.TrackingURL = document.location.origin;
+	ctx.LinkedOut.TotalAds = 0;
+	ctx.LinkedOut.TrackingSite = undefined;
+	ctx.LinkedOut.FeedContainerQ = undefined;
+	ctx.LinkedOut.HomeButtonQ = undefined;
+	ctx.LinkedOut.RefreshButtonQ = undefined;
+	ctx.LinkedOut.FeedURL = undefined;
 	restoreOptions();
 }
 
@@ -99,7 +108,7 @@ function countAll(element,objectType) {
 }
 
 function getMainFeed() {
-	var tFeed = $(linkedout_FeedContainerQ)[0];
+	var tFeed = $(ctx.LinkedOut.FeedContainerQ)[0];
 	return tFeed;
 }
 
@@ -107,7 +116,7 @@ function getPromotionList() {
 	var result = Array();
 	debugMsg(89,"[EXT::getPromotionList]: BEGIN");
 	var mainFeed = getMainFeed();
-	if ( linkedout_TrackingSite === "LinkedIn" ) {
+	if ( ctx.LinkedOut.TrackingSite === "LinkedIn" ) {
 		var items = $(mainFeed).find("div[data-id]").toArray();
 		if ( items !== undefined ) {
 			debugMsg(79,"[EXT::getPromotionList]: parsing ["+items.length+"] LinkedIn items");
@@ -150,16 +159,16 @@ function getPromotionList() {
 			debugMsg(69,"[EXT::getPromotionList]: found ["+result.length+"] LinkedIn Ads");
 		}
 	}
-	else if ( linkedout_TrackingSite === "Twitter" ) {
+	else if ( ctx.LinkedOut.TrackingSite === "Twitter" ) {
 		result = $(mainFeed).find("div.promoted-tweet").toArray();
 		debugMsg(69,"[EXT::getPromotionList]: found ["+result.length+"] Twitter Ads");
 	}
 	// not implemented yet
-	else if ( linkedout_TrackingSite === "Instagram" ) {
+	else if ( ctx.LinkedOut.TrackingSite === "Instagram" ) {
 		result = $(mainFeed).find("div.promoted-ZZZ").toArray();
 		debugMsg(69,"[EXT::getPromotionList]: found ["+result.length+"] Instagram Ads");
 	}
-	else if ( linkedout_TrackingSite === "Facebook" ) {
+	else if ( ctx.LinkedOut.TrackingSite === "Facebook" ) {
 		var items = $(mainFeed).find("div.sponsored_ad").toArray();
 		if ( items !== undefined ) {
 			debugMsg(79,"[EXT::getPromotionList]: parsing ["+items.length+"] Facebook items");
@@ -177,12 +186,12 @@ function getPromotionList() {
 
 function hasTattoo(element) {
 	debugMsg(99,"[EXT::hasTattoo]: BEGIN");
-	var branded = (countAll(element,"button." + linkedout_TattooClass) > 0);
+	var branded = (countAll(element,"button." + ctx.LinkedOut.TattooClass) > 0);
 	/*
 	var children = element.childNodes;
 	for (var i = 0; i < children.length; i++) {
 		if (children[i].classList !== undefined &&
-			children[i].classList.contains(linkedout_TattooClass)) {
+			children[i].classList.contains(ctx.LinkedOut.TattooClass)) {
 			branded = true;
 			break;
 		}
@@ -205,17 +214,17 @@ function markElement(element) {
 		debugMsg(89,"[EXT::markElement]: Marking");
 		// mark the element
 		element.classList.add("linkedout-class");
-		element.style.display = ( opt.AutoHide ? "none" : "block");
+		element.style.display = ( ctx.LinkedOut.opt.AutoHide ? "none" : "block");
 		// apply tattoo
 		debugMsg(89,"[EXT::markElement]: Tattoo");
 		var btn = document.createElement("button");
-		btn.classList.add(linkedout_TattooClass);
+		btn.classList.add(ctx.LinkedOut.TattooClass);
 		btn.classList.add("button-reset");
-		btn.innerText = linkedout_TotalAds.toString(); // "AD";
+		btn.innerText = ctx.LinkedOut.TotalAds.toString(); // "AD";
 		btn.addEventListener("click", function () {
 			element.style.display = "none";
 		});
-		btn.style.display = ( opt.Tattoo ? "block" : "none");
+		btn.style.display = ( ctx.LinkedOut.opt.Tattoo ? "block" : "none");
 		element.appendChild(btn);
 	}
 	debugMsg(99,"[EXT::markElement]: END");
@@ -225,29 +234,40 @@ function processFeed() {
 	debugMsg(89,"[EXT::processFeed]: BEGIN");
 	var tPromotionList = getPromotionList();
 	var nCountAds = 0;
+	// stop delayed testing
+	clearInterval(ctx.LinkedOut.intervalId);
+	ctx.LinkedOut.intervalId = undefined;
+	// start checking data
 	debugMsg(79,"[EXT::processFeed]: checking [" + tPromotionList.length + "] ads ");
 	tPromotionList.forEach(function (element) {
 		if (!isMarked(element)) {
 			nCountAds ++;
-			linkedout_TotalAds ++;
+			ctx.LinkedOut.TotalAds ++;
 			markElement(element);
 		}
 	});
-	debugMsg(59,"[EXT::processFeed]: nCountAds=" + nCountAds + ", TotalAds=" +linkedout_TotalAds);
+	debugMsg(59,"[EXT::processFeed]: nCountAds=" + nCountAds + ", TotalAds=" +ctx.LinkedOut.TotalAds);
 	if ( nCountAds > 0 ) {
 		chrome.runtime.sendMessage({
 			"action" : "updateCount",
-			"value" : linkedout_TotalAds
+			"value" : ctx.LinkedOut.TotalAds
 		});
 	}
 	debugMsg(99,"[EXT::processFeed]: END");
 }
 
-function listenForEvents() {
-	debugMsg(79,"[EXT::listenForEvents]: BEGIN");
+function delayFeedCheck() {
+	//debugMsg(99,"[EXT::" + caller + "]: BEGIN");
+	clearInterval(ctx.LinkedOut.intervalId);
+	ctx.LinkedOut.intervalId = setInterval(checkStatus, 200);
+	//debugMsg(99,"[EXT::" + caller + "]: END");
+}
+
+function waitForFeed() {
+	debugMsg(79,"[EXT::waitForFeed]: BEGIN");
 
     var observeDOM = (function () {
-		debugMsg(89,"[EXT::listenForEvents::observeDOM]: BEGIN");
+		debugMsg(89,"[EXT::waitForFeed::observeDOM]: BEGIN");
         var MutationObserver = window.MutationObserver || window.WebKitMutationObserver;
 
         return function (obj, callback) {
@@ -256,12 +276,12 @@ function listenForEvents() {
             if (MutationObserver) {
                 // define a new observer
                 var obs = new MutationObserver(function (mutations, observer) {
-					if (linkedout_TrackingURL != document.location.origin) {
+					if (ctx.LinkedOut.TrackingURL != document.location.origin) {
 						debugMsg(29,"[EXT]: SITE CHANGED");
 						determineSite(true);
-						if (intervalId === undefined) {
+						if (ctx.LinkedOut.intervalId === undefined) {
 							debugMsg(99,"[EXT]: Interval id is undefined, checking status");
-							intervalId = setInterval(checkStatus, 200);
+							ctx.LinkedOut.intervalId = setInterval(checkStatus, 200);
 						} else {
 							debugMsg(99,"[EXT]: Interval id is not undefined");
 						}
@@ -277,7 +297,7 @@ function listenForEvents() {
                 obj.addEventListener('DOMNodeInserted', callback, false);
             }
         }
-		debugMsg(99,"[EXT::listenForEvents::observeDOM]: END");
+		debugMsg(99,"[EXT::waitForFeed::observeDOM]: END");
     })();
 	
     // there is only one mainFeed element on the page
@@ -286,35 +306,40 @@ function listenForEvents() {
  	processFeed();
     // start listening for events
     observeDOM(mainFeed, function () {
-		debugMsg(89,"[EXT::listenForEvents]: Observing DOM...");
+		debugMsg(89,"[EXT::waitForFeed]: Observing DOM...");
  		processFeed();
     });
-	debugMsg(99,"[EXT::listenForEvents]: END");
+	debugMsg(99,"[EXT::waitForFeed]: END");
+}
+
+function addListenerForPopState() {
+	try {
+		window.addEventListener('popstate', delayFeedCheck);
+	} catch (e) {
+		debugMsg(99,"[EXT::addListenerForPopState]: error: " + e);
+	}
+}
+
+function addListenerForRefreshButton() {
+	if ( ctx.LinkedOut.RefreshButtonQ !== undefined ) {
+		try {
+            $(ctx.LinkedOut.RefreshButtonQ).bind('click', delayFeedCheck);
+			//$(document).on('click', ctx.LinkedOut.RefreshButtonQ, delayFeedCheck);
+		} catch (e) {
+			debugMsg(99,"[EXT::ClickBind_RefreshButton]: error: " + e);
+		}
+	}
 }
 
 function addListenerForHomeButton() {
-    debugMsg(79,"[EXT::addListenerForHomeButton]: BEGIN");
-    var homeButton = $(linkedout_HomeButtonQ)[0];
-	if ( homeButton !== undefined ) {
-		debugMsg(99,"[EXT::addListenerForHomeButton]: FOUND");
-		homeButton.addEventListener("click", function () {
-			var intervalId = undefined;
-			function checkStatus() {
-				debugMsg(99,"[EXT::addListenerForHomeButton::checkStatus]: BEGIN");
-				var mainFeed = getMainFeed();
-				if (mainFeed === undefined || mainFeed.children === undefined || mainFeed.children.length <= 2) {
-					debugMsg(89,"[EXT::ListenerForHomeButton::checkStatus]: Main Feed ("+linkedout_FeedContainerQ+") still not ready, waiting...");
-				} else {
-					debugMsg(89,"[EXT::ListenerForHomeButton::checkStatus]: Main Feed ("+linkedout_FeedContainerQ+") is ready, it has " + mainFeed.children.length + " elements");
-					clearInterval(intervalId);
-					listenForEvents();
-				}
-				debugMsg(99,"[EXT::addListenerForHomeButton::checkStatus]: END");
-			}
-			intervalId = setInterval(checkStatus, 200);
-		});
+	if ( ctx.LinkedOut.HomeButtonQ !== undefined ) {
+		try {
+            $(ctx.LinkedOut.HomeButtonQ).bind('click', delayFeedCheck);
+			//$(document).on('click', ctx.LinkedOut.HomeButtonQ, delayFeedCheck);
+		} catch (e) {
+			debugMsg(99,"[EXT::ClickBind_HomeButton]: error: " + e);
+		}
 	}
-    debugMsg(99,"[EXT::addListenerForHomeButton]: END");
 }
 
 /**
@@ -322,38 +347,21 @@ function addListenerForHomeButton() {
  *  Script starts here
  *  ##################
  */
-var intervalId = undefined;
-
 function checkStatus() {
     debugMsg(79,"[EXT::checkStatus]: BEGIN");
-
-    /*
-     Although the document.readyState should be 'complete' at this point,
-     or in other words, page should be ready, we check for readiness in case
-     a document takes a lot of time to load
-     (see https://developer.chrome.com/extensions/content_scripts#run_time)
-     */
     debugMsg(99,"[EXT::checkStatus]: Document ready state = " + document.readyState);
-	/*
-    if (document.readyState !== "complete") {
-        debugMsg(89,"[EXT::checkStatus]: Document not yet ready, waiting...");
-    }
-	else 
-	*/
-	if ( linkedout_FeedContainerQ === undefined ) {
+	if ( ctx.LinkedOut.FeedContainerQ === undefined ) {
         debugMsg(89,"[EXT::checkStatus]: Document ready, site not determined...");
 	}
 	else {
 		var mainFeed = getMainFeed();
 		if (mainFeed === undefined || mainFeed.children === undefined || mainFeed.children.length <= 2) {
-			debugMsg(89,"[EXT::checkStatus]: Main Feed ("+linkedout_FeedContainerQ+") still not ready, waiting...");
+			debugMsg(89,"[EXT::checkStatus]: Main Feed ("+ctx.LinkedOut.FeedContainerQ+") still not ready, waiting...");
 		} else {
-			debugMsg(89,"[EXT::checkStatus]: Main Feed ("+linkedout_FeedContainerQ+") is ready, it has " + mainFeed.children.length + " elements");
-			clearInterval(intervalId);
-			intervalId = undefined;
-			addListenerForHomeButton();
-			listenForEvents();
-			chrome.runtime.onMessage.addListener(onNotify);
+			debugMsg(89,"[EXT::checkStatus]: Main Feed ("+ctx.LinkedOut.FeedContainerQ+") is ready, it has " + mainFeed.children.length + " elements");
+			clearInterval(ctx.LinkedOut.intervalId);
+			ctx.LinkedOut.intervalId = undefined;
+			waitForFeed();
 		}
 	}	
     debugMsg(99,"[EXT::checkStatus]: END");
@@ -365,60 +373,51 @@ function determineSite(doReset) {
 		resetGlobals();
 	}
 	// check for new site
-    if (linkedout_TrackingURL !== undefined ) {
-		debugMsg(89,"[EXT::determineSite]: URL = " + linkedout_TrackingURL);
-		if ( linkedout_TrackingURL.startsWith("https://www.linkedin.com")) {
-			linkedout_TrackingSite = "LinkedIn";
-			//linkedout_FeedContainerQ = ".core-rail"; // DOM class
-			linkedout_FeedContainerQ = ".scaffold-layout__main"; // DOM class
-			linkedout_HomeButtonQ = "#feed-nav-item";
+    if (ctx.LinkedOut.TrackingURL !== undefined ) {
+		debugMsg(89,"[EXT::determineSite]: URL = " + ctx.LinkedOut.TrackingURL);
+		if ( ctx.LinkedOut.TrackingURL.startsWith("https://www.linkedin.com")) {
+			ctx.LinkedOut.TrackingSite = "LinkedIn";
+			//ctx.LinkedOut.FeedContainerQ = ".core-rail"; // DOM class
+			// ctx.LinkedOut.HomeButtonQ = "#feed-nav-item"; // DOM id
+			ctx.LinkedOut.FeedContainerQ = ".scaffold-layout__main"; // DOM class
+			ctx.LinkedOut.HomeButtonQ = "a[href*='feed']"; // DOM attr 
+			ctx.LinkedOut.RefreshButtonQ = "button[data-control-name='new_updates']"; // DOM attr 
+			ctx.LinkedOut.FeedURL = "/feed/";
 		}
-		else if ( linkedout_TrackingURL.startsWith("https://twitter.com")) {
-			linkedout_TrackingSite = "Twitter";
-			linkedout_FeedContainerQ = ".stream-items"; // DOM class
-			linkedout_HomeButtonQ = "#global-nav-home";
+		/* removed 2021-Feb-19 due to code obsfucation
+		else if ( ctx.LinkedOut.TrackingURL.startsWith("https://twitter.com")) {
+			ctx.LinkedOut.TrackingSite = "Twitter";
+			ctx.LinkedOut.FeedContainerQ = ".stream-items"; // DOM class
+			ctx.LinkedOut.HomeButtonQ = "#global-nav-home"; // DOM id
 		}
-		else if ( linkedout_TrackingURL.startsWith("https://www.facebook.com")) {
-			linkedout_TrackingSite = "Facebook";
-			linkedout_FeedContainerQ = "#stream_pagelet"; // DOM id
+		else if ( ctx.LinkedOut.TrackingURL.startsWith("https://www.facebook.com")) {
+			ctx.LinkedOut.TrackingSite = "Facebook";
+			ctx.LinkedOut.FeedContainerQ = "#stream_pagelet"; // DOM id
 			// this even necessary?
-			linkedout_HomeButtonQ = "a[data-gt*='home_chrome']";  
+			ctx.LinkedOut.HomeButtonQ = "a[data-gt*='home_chrome']";  
 			// div.data-click="home_icon" or a.data-gt="{"chrome_nav_item":"home_chrome"}"
 		}
-		else if ( linkedout_TrackingURL.startsWith("https://instagram.com")) {
-			linkedout_TrackingSite = "Instagram";
-			linkedout_FeedContainerQ = ".zzz";
-			linkedout_HomeButtonQ = ".zzz";
+		else if ( ctx.LinkedOut.TrackingURL.startsWith("https://instagram.com")) {
+			ctx.LinkedOut.TrackingSite = "Instagram";
+			ctx.LinkedOut.FeedContainerQ = ".zzz";
+			ctx.LinkedOut.HomeButtonQ = ".zzz";
 		}
-		linkedout_TotalAds = $(".linkedout-class").length;
+		*/
+		ctx.LinkedOut.TotalAds = $(".linkedout-class").length;
     }
 	enableIcon();
-    debugMsg(79,"[EXT::determineSite]: RESULT = " + linkedout_TrackingSite);
+    debugMsg(79,"[EXT::determineSite]: RESULT = " + ctx.LinkedOut.TrackingSite);
 }
 
-var listener = function() {
-    debugMsg(79,"[EXT::listener]: BEGIN");
-	determineSite(false);
-	if ( linkedout_TrackingSite ) {
-		if (intervalId === undefined) {
-			debugMsg(89,"[EXT::listener]: Interval id is undefined, checking status");
-			intervalId = setInterval(checkStatus, 200);
-		} else {
-			debugMsg(89,"[EXT::listener]: Interval id is defined");
-		}
-	}
-    debugMsg(99,"[EXT::listener]: END");
-};
-
 function initExtension() {
+	debugMsg(99,"[EXT]: INITIALIZING ...");
 	determineSite(true);
-	window.addEventListener('popstate', listener);
-	if (intervalId === undefined) {
-		debugMsg(89,"[EXT]: Interval id is undefined, checking status");
-		intervalId = setInterval(checkStatus, 200);
-	} else {
-		debugMsg(89,"[EXT]: Interval id is not undefined");
-	}
+	addListenerForPopState();
+	addListenerForHomeButton();
+	addListenerForRefreshButton();
+	chrome.runtime.onMessage.addListener(onNotify);
+	delayFeedCheck();
+	debugMsg(99,"[EXT]: INITIALIZAION COMPLETE");
 }
 
 function onNotify(message, sender, sendResponse) {
@@ -439,33 +438,48 @@ function onNotify(message, sender, sendResponse) {
 }
 
 function disableIcon() {
-	chrome.runtime.sendMessage({
-		"action" : "enableIcon",
-		"value" : false
-	});
-	chrome.runtime.sendMessage({
-		"action" : "updateCount",
-		"value" : "-"
-	});
+	try {
+		chrome.runtime.sendMessage({
+			"action" : "enableIcon",
+			"value" : false
+		});
+	} catch (e) {
+		debugMsg(99,"[EXT::disableIcon]: error: " + e);
+	}
+	try {
+		chrome.runtime.sendMessage({
+			"action" : "updateCount",
+			"value" : "-"
+		});
+	} catch (e) {
+		debugMsg(99,"[EXT::resetCount]: error: " + e);
+	}
 }
 
 function enableIcon() {
-	chrome.runtime.sendMessage({
-		"action" : "enableIcon",
-		"value" : (linkedout_TrackingURL !== undefined)
-	});
-	chrome.runtime.sendMessage({
-		"action" : "updateCount",
-		"value" : linkedout_TotalAds
-	});
+	try {
+		chrome.runtime.sendMessage({
+			"action" : "enableIcon",
+			"value" : (ctx.LinkedOut.TrackingURL !== undefined)
+		});
+	} catch (e) {
+		debugMsg(99,"[EXT::enableIcon]: error: " + e);
+	}
+	try {
+		chrome.runtime.sendMessage({
+			"action" : "updateCount",
+			"value" : ctx.LinkedOut.TotalAds
+		});
+	} catch (e) {
+		debugMsg(99,"[EXT::updateCount]: error: " + e);
+	}
 }
 
 window.addEventListener('focus', function() {
-	debugMsg(99,"[EXT]: FOCUS " + linkedout_TrackingURL);
+	debugMsg(99,"[EXT]: FOCUS " + ctx.LinkedOut.TrackingURL);
 	enableIcon();
 });
 
 // STARTUP HERE
-debugMsg(99,"[EXT]: INITIALIZING ...");
 initExtension();
-debugMsg(99,"[EXT]: INITIALIZAION COMPLETE");
+

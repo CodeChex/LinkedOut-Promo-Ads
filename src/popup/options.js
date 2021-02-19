@@ -3,9 +3,8 @@ var linkedout_Browser = (typeof browser === "undefined" || Object.getPrototypeOf
 
 // options
 var opt = {
-	Tattoo : false,
-	AutoHide : false,
-	Debug : 999
+	Tattoo : true,
+	AutoHide : false
 };
 restoreOptions();
 
@@ -16,11 +15,9 @@ function onError(error) {
 function saveOptions() {
 	opt.AutoHide = document.getElementsByName("hideAds")[0].checked;
 	opt.Tattoo = document.getElementsByName("showTattoo")[0].checked;
-	opt.Debug = document.getElementsByName("debugLevel")[0].value;
 	console.debug("[POPUP::onClick]: saveOptions = " 
 				+ "\n\t hide=" + opt.AutoHide 
-				+ "\n\t tattoo=" + opt.Tattoo
-				+ "\n\t debug=" + opt.Debug);
+				+ "\n\t tattoo=" + opt.Tattoo);
 	if (linkedout_Browser === "chrome") {
 		chrome.storage.local.set(opt);
 	}
@@ -35,11 +32,9 @@ function restoreOptions() {
 			opt = result;
 			console.debug("[POPUP::onClick]: loadOptions = " 
 					+ "\n\t hide=" + opt.AutoHide 
-					+ "\n\t tattoo=" + opt.Tattoo
-					+ "\n\t debug=" + opt.Debug);
+					+ "\n\t tattoo=" + opt.Tattoo);
 			document.getElementsByName("hideAds")[0].checked = opt.AutoHide;
 			document.getElementsByName("showTattoo")[0].checked = opt.Tattoo;
-			document.getElementsByName("debugLevel")[0].value = (isNaN(opt.Debug) ? 0 : opt.Debug);
 		}
 	}
 	if (linkedout_Browser === "chrome") {
