@@ -1,5 +1,13 @@
 /* 
-Copyleft (c) 2018, 2021, Checco Computer Services
+Copyleft (c) 2018-2022, Checco Computer Services
+
+Version 0.9.2
+- Save & Apply" button will reparse existing feed
+- adjusted for LinkedIn new "Feed" container
+
+Version 0.9.1
+- refactored for Chrome Manifest v3
+- reactivated Twitter, FaceBook, Instagram
 
 Version 0.9.0
 - removed Twitter, FaceBook, Instagram due to their code obsfucation
@@ -128,28 +136,15 @@ function getPromotionList() {
 				}
 				// check for other types of promoted ads
 				else {
-					// old style "headline"
-					var listHeadline = $(item).find("span.feed-shared-post-meta__headline").toArray();
+					// old-school "headline"
+					var listHeadline = $(item).find("span"+ctx.LinkedOut.headline_class).toArray();
 					if ( listHeadline !== undefined ) {
 						debugMsg(89,"[EXT::getPromotionList]: parsing ["+listHeadline.length+"] LinkedIn headlines");
 						listHeadline.forEach(function(iHeadline) {
 							debugMsg(99,"[EXT::getPromotionList]: headline ["+iHeadline.innerText+"] ");
-							if ( iHeadline.innerText === "Promoted" ) {
+							if ( iHeadline.innerText === ctx.LinkedOut.headline_text ) {
 								result.push(item);
 								debugMsg(89,"[EXT::getPromotionList]: found LinkedIn PROMOTED headline");
-								return;
-							}
-						});
-					}
-					// newer style "sub-description"
-					var listSubDesc = $(item).find("span.feed-shared-actor__sub-description").toArray();
-					if ( listSubDesc !== undefined ) {
-						debugMsg(89,"[EXT::getPromotionList]: parsing ["+listSubDesc.length+"] LinkedIn sub-descriptions");
-						listSubDesc.forEach(function(iSubDesc) {
-							debugMsg(99,"[EXT::getPromotionList]: sub-description ["+iSubDesc.innerText+"] ");
-							if ( iSubDesc.innerText === "Promoted" ) {
-								result.push(item);
-								debugMsg(89,"[EXT::getPromotionList]: found LinkedIn PROMOTED sub-description");
 								return;
 							}
 						});
@@ -377,18 +372,20 @@ function determineSite(doReset) {
 		debugMsg(89,"[EXT::determineSite]: URL = " + ctx.LinkedOut.TrackingURL);
 		if ( ctx.LinkedOut.TrackingURL.startsWith("https://www.linkedin.com")) {
 			ctx.LinkedOut.TrackingSite = "LinkedIn";
-			//ctx.LinkedOut.FeedContainerQ = ".core-rail"; // DOM class
-			// ctx.LinkedOut.HomeButtonQ = "#feed-nav-item"; // DOM id
-			ctx.LinkedOut.FeedContainerQ = ".scaffold-layout__main"; // DOM class
-			ctx.LinkedOut.HomeButtonQ = "a[href*='feed']"; // DOM attr 
+			ctx.LinkedOut.FeedContainerQ = ".scaffold-finite-scroll__content"; // DOM class
+			ctx.LinkedOut.HomeButtonQ = "a[href*='/feed/']"; // DOM attr 
 			ctx.LinkedOut.RefreshButtonQ = "button[data-control-name='new_updates']"; // DOM attr 
 			ctx.LinkedOut.FeedURL = "/feed/";
+			ctx.LinkedOut.headline_class = ".update-components-actor__sub-description";
+			ctx.LinkedOut.headline_text = "Promoted";
+
 		}
 		/* removed 2021-Feb-19 due to code obsfucation
 		else if ( ctx.LinkedOut.TrackingURL.startsWith("https://twitter.com")) {
 			ctx.LinkedOut.TrackingSite = "Twitter";
 			ctx.LinkedOut.FeedContainerQ = ".stream-items"; // DOM class
 			ctx.LinkedOut.HomeButtonQ = "#global-nav-home"; // DOM id
+			ctx.LinkedOut.FeedURL = "/home";
 		}
 		else if ( ctx.LinkedOut.TrackingURL.startsWith("https://www.facebook.com")) {
 			ctx.LinkedOut.TrackingSite = "Facebook";
@@ -402,7 +399,7 @@ function determineSite(doReset) {
 			ctx.LinkedOut.FeedContainerQ = ".zzz";
 			ctx.LinkedOut.HomeButtonQ = ".zzz";
 		}
-		*/
+		-- */
 		ctx.LinkedOut.TotalAds = $(".linkedout-class").length;
     }
 	enableIcon();
@@ -432,6 +429,7 @@ function onNotify(message, sender, sendResponse) {
 		}
 		else if (message.action === "applyOptions" ) {
 			restoreOptions();
+			processFeed();
 		}
 	}
 	debugMsg(99,"[EXT::onNotify]: END");

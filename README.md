@@ -16,6 +16,9 @@ Adds a button for automatic hiding of promotional ads on various social media fe
 and click **Add to Chrome**
 
 ## History
+### Version 0.9.2
+- update to support new LinkedIn layout
+
 ### Version 0.9.0
 - removed Twitter, FaceBook, Instagram due to their code obsfucation
 - rewritten to support namespaces
